@@ -1,0 +1,3 @@
+[submodule "mmdeploy/mmclassification"]
+	path = mmdeploy/mmclassification
+	url = https://github.com/open-mmlab/mmclassification.git
