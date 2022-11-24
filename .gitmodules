@@ -1,3 +1,0 @@
-[submodule "mmdeploy"]
-	path = mmdeploy
-	url = https://github.com/open-mmlab/mmdeploy.git
