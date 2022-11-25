@@ -12,11 +12,12 @@
 
 namespace mmdeploy {
 struct NMSRotatedKernel {
-  NMSRotatedKernel(const OrtApi& api, const OrtKernelInfo* info);
+  NMSRotatedKernel(OrtApi api, const OrtKernelInfo* info);
 
   void Compute(OrtKernelContext* context);
 
  private:
+  OrtApi api_;
   Ort::CustomOpApi ort_;
   const OrtKernelInfo* info_;
   Ort::AllocatorWithDefaultOptions allocator_;
@@ -25,7 +26,7 @@ struct NMSRotatedKernel {
 };
 
 struct NMSRotatedOp : Ort::CustomOpBase<NMSRotatedOp, NMSRotatedKernel> {
-  void* CreateKernel(const OrtApi& api, const OrtKernelInfo* info) const {
+  void* CreateKernel(OrtApi api, const OrtKernelInfo* info) const {
     return new NMSRotatedKernel(api, info);
   }
   const char* GetName() const { return "NMSRotated"; }

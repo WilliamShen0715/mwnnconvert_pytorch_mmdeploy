@@ -76,24 +76,6 @@ class Device {
   std::shared_ptr<mmdeploy_device> device_;
 };
 
-class Profiler {
- public:
-  explicit Profiler(std::string_view path) : path_(path) {
-    mmdeploy_profiler_t profiler{};
-    auto ec = mmdeploy_profiler_create(path_.c_str(), &profiler);
-    if (ec != MMDEPLOY_SUCCESS) {
-      throw_exception(static_cast<ErrorCode>(ec));
-    }
-    profiler_.reset(profiler, [](auto p) { mmdeploy_profiler_destroy(p); });
-  };
-
-  operator mmdeploy_profiler_t() const noexcept { return profiler_.get(); }
-
- private:
-  std::string path_;
-  std::shared_ptr<mmdeploy_profiler> profiler_;
-};
-
 class Mat {
  public:
   Mat() : desc_{} {}
@@ -205,10 +187,6 @@ class Context {
     mmdeploy_context_add(*this, MMDEPLOY_TYPE_DEVICE, nullptr, device);
   }
 
-  void Add(const Profiler& profiler) {
-    mmdeploy_context_add(*this, MMDEPLOY_TYPE_PROFILER, nullptr, profiler);
-  }
-
   operator mmdeploy_context_t() const noexcept { return context_.get(); }
 
  private:
@@ -221,7 +199,6 @@ using cxx::Context;
 using cxx::Device;
 using cxx::Mat;
 using cxx::Model;
-using cxx::Profiler;
 using cxx::Rect;
 using cxx::Scheduler;
 

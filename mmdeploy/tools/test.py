@@ -1,6 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import argparse
-import os
 
 from mmcv import DictAction
 from mmcv.parallel import MMDataParallel
@@ -60,11 +59,6 @@ def parse_args():
         type=str,
         help='log evaluation results and speed to file',
         default=None)
-    parser.add_argument(
-        '--json-file',
-        type=str,
-        help='log evaluation results to json file',
-        default='./results.json')
     parser.add_argument(
         '--speed-test', action='store_true', help='activate speed test')
     parser.add_argument(
@@ -147,19 +141,9 @@ def main():
     else:
         outputs = task_processor.single_gpu_test(model, data_loader, args.show,
                                                  args.show_dir)
-    json_dir, _ = os.path.split(args.json_file)
-    if json_dir:
-        os.makedirs(json_dir, exist_ok=True)
-    task_processor.evaluate_outputs(
-        model_cfg,
-        outputs,
-        dataset,
-        args.metrics,
-        args.out,
-        args.metric_options,
-        args.format_only,
-        args.log2file,
-        json_file=args.json_file)
+    task_processor.evaluate_outputs(model_cfg, outputs, dataset, args.metrics,
+                                    args.out, args.metric_options,
+                                    args.format_only, args.log2file)
     # only effective when the backend requires explicit clean-up (e.g. Ascend)
     destroy_model()
 

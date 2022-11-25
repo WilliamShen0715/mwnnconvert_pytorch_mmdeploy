@@ -8,22 +8,6 @@
 
 namespace mmdeploy {
 
-void SaveIntermediates(Value& value, Value::Array& intermediates) {
-  if (value.is_array()) {
-    for (auto& inner : value) {
-      if (auto it = inner.find("__data__"); it != inner.end()) {
-        std::move(it->begin(), it->end(), std::back_inserter(intermediates));
-        it->array().clear();
-      }
-    }
-  } else if (value.is_object()) {
-    if (auto it = value.find("__data__"); it != value.end()) {
-      std::move(it->begin(), it->end(), std::back_inserter(intermediates));
-      it->array().clear();
-    }
-  }
-}
-
 Compose::Compose(const Value& args, int version) : Transform(args) {
   assert(args.contains("context"));
 
@@ -36,30 +20,15 @@ Compose::Compose(const Value& args, int version) : Transform(args) {
     context["fuse_transform"] = true;
     context["sha256"] = sha256;
   }
-  if (context.contains("scope")) {
-    auto scope = context["scope"].get<profiler::Scope*>();
-    scope_ = scope->CreateScope("Compose");
-  }
   for (auto cfg : args["transforms"]) {
     cfg["context"] = context;
     auto type = cfg.value("type", std::string{});
     MMDEPLOY_DEBUG("creating transform: {} with cfg: {}", type, mmdeploy::to_json(cfg).dump(2));
-    auto creator = gRegistry<Transform>().Get(type, version);
+    auto creator = Registry<Transform>::Get().GetCreator(type, version);
     if (!creator) {
       MMDEPLOY_ERROR("Unable to find Transform creator: {}. Available transforms: {}", type,
-                     gRegistry<Transform>().List());
+                     Registry<Transform>::Get().List());
       throw_exception(eEntryNotFound);
-    }
-    if (scope_) {
-      auto scope = scope_->CreateScope(type);
-      if (type == "Lift") {
-        cfg["context"]["scope"] = scope;
-        transform_scopes_.push_back(nullptr);
-      } else {
-        transform_scopes_.push_back(scope);
-      }
-    } else {
-      transform_scopes_.push_back(nullptr);
     }
     auto transform = creator->Create(cfg);
     if (!transform) {
@@ -73,22 +42,29 @@ Compose::Compose(const Value& args, int version) : Transform(args) {
 Result<Value> Compose::Process(const Value& input) {
   Value output = input;
   Value::Array intermediates;
-  int idx = 0;
   for (auto& transform : transforms_) {
-    profiler::ScopedCounter counter(transform_scopes_[idx++]);
     OUTCOME_TRY(auto t, transform->Process(output));
-    SaveIntermediates(t, intermediates);
-    output = std::move(t);
-    if (transform_scopes_[idx - 1]) {
-      OUTCOME_TRY(stream_.Wait());
+    if (auto it = t.find("__data__"); it != t.end()) {
+      std::move(it->begin(), it->end(), std::back_inserter(intermediates));
+      it->array().clear();
     }
+    output = std::move(t);
   }
   OUTCOME_TRY(stream_.Wait());
   return std::move(output);
 }
 
-MMDEPLOY_REGISTER_FACTORY_FUNC(Transform, (Compose, 0), [](const Value& config) {
-  return std::make_unique<Compose>(config, 0);
-});
+class ComposeCreator : public Creator<Transform> {
+ public:
+  const char* GetName() const override { return "Compose"; }
+  int GetVersion() const override { return version_; }
+  ReturnType Create(const Value& args) override {
+    return std::make_unique<Compose>(args, version_);
+  }
 
+ private:
+  int version_{1};
+};
+
+REGISTER_MODULE(Transform, ComposeCreator);
 }  // namespace mmdeploy

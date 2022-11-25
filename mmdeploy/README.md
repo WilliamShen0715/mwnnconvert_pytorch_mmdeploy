@@ -50,7 +50,6 @@ The currently supported codebases and models are as follows, and more will be in
 - [mmpose](docs/en/04-supported-codebases/mmpose.md)
 - [mmdet3d](docs/en/04-supported-codebases/mmdet3d.md)
 - [mmrotate](docs/en/04-supported-codebases/mmrotate.md)
-- [mmaction2](docs/en/04-supported-codebases/mmaction2.md)
 
 ### Multiple inference backends are available
 
@@ -150,7 +149,6 @@ This project is released under the [Apache 2.0 license](LICENSE).
 - [MMClassification](https://github.com/open-mmlab/mmclassification): OpenMMLab image classification toolbox and benchmark.
 - [MMDetection](https://github.com/open-mmlab/mmdetection): OpenMMLab detection toolbox and benchmark.
 - [MMDetection3D](https://github.com/open-mmlab/mmdetection3d): OpenMMLab's next-generation platform for general 3D object detection.
-- [MMYOLO](https://github.com/open-mmlab/mmyolo): OpenMMLab YOLO series toolbox and benchmark
 - [MMRotate](https://github.com/open-mmlab/mmrotate): OpenMMLab rotated object detection toolbox and benchmark.
 - [MMSegmentation](https://github.com/open-mmlab/mmsegmentation): OpenMMLab semantic segmentation toolbox and benchmark.
 - [MMOCR](https://github.com/open-mmlab/mmocr): OpenMMLab text detection, recognition, and understanding toolbox.

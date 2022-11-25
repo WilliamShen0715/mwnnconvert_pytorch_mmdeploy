@@ -1,6 +1,8 @@
 backend_config = dict(
     type='rknn',
     common_config=dict(
-        target_platform='rv1126',  # 'rk3588'
-        optimization_level=1),
-    quantization_config=dict(do_quantization=True, dataset=None))
+        mean_values=None,
+        std_values=None,
+        target_platform='rk3588',
+        optimization_level=3),
+    quantization_config=dict(do_quantization=False, dataset=None))

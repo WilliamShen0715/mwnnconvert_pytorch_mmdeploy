@@ -9,7 +9,6 @@ aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/core CORE_TC)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/preprocess TRANSFORM_TC)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/net NET_TC)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/model MODEL_TC)
-aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/graph GRAPH_TC)
 
 set(DEVICE_TC)
 foreach (DEVICE IN LISTS MMDEPLOY_TARGET_DEVICES)
@@ -59,8 +58,7 @@ set(TC_SRCS
         ${MODEL_TC}
         ${NET_TC}
         ${DEVICE_TC}
-        ${CAPI_TC}
-        ${GRAPH_TC})
+        ${CAPI_TC})
 
 add_executable(mmdeploy_tests ${TC_SRCS})
 target_include_directories(mmdeploy_tests

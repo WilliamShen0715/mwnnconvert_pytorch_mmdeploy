@@ -7,11 +7,12 @@
 namespace mmdeploy {
 
 struct MMCVModulatedDeformConvKernel {
-  MMCVModulatedDeformConvKernel(const OrtApi &api, const OrtKernelInfo *info);
+  MMCVModulatedDeformConvKernel(OrtApi api, const OrtKernelInfo *info);
 
   void Compute(OrtKernelContext *context);
 
  protected:
+  OrtApi api_;
   Ort::CustomOpApi ort_;
   const OrtKernelInfo *info_;
   Ort::AllocatorWithDefaultOptions allocator_;
@@ -28,7 +29,7 @@ struct MMCVModulatedDeformConvKernel {
 
 struct MMCVModulatedDeformConvOp
     : Ort::CustomOpBase<MMCVModulatedDeformConvOp, MMCVModulatedDeformConvKernel> {
-  void *CreateKernel(const OrtApi &api, const OrtKernelInfo *info) const {
+  void *CreateKernel(OrtApi api, const OrtKernelInfo *info) const {
     return new MMCVModulatedDeformConvKernel(api, info);
   }
 
