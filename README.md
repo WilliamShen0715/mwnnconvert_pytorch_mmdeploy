@@ -35,10 +35,12 @@ Refer to the following example for all supporting pytorch series.
 Default output directory is under mmdeploy_model
 
 + [DenseNet](https://gitsnps.internal.synopsys.com/dwc_ev/cnn_models/-/tree/master/pytorch/DenseNet) 
-+ [EfficientNet](https://gitsnps.internal.synopsys.com/dwc_ev/cnn_models/-/tree/master/pytorch/EfficientNet)   
++ [EfficientNet](https://gitsnps.internal.synopsys.com/dwc_ev/cnn_models/-/tree/master/pytorch/EfficientNet)
++ [Fast FCN](https://gitsnps.internal.synopsys.com/dwc_ev/cnn_models/-/tree/master/pytorch/Fast_FCN)
 + [FCN](https://gitsnps.internal.synopsys.com/dwc_ev/cnn_models/-/tree/master/pytorch/FCN)   
 + [MobileNet V3](https://gitsnps.internal.synopsys.com/dwc_ev/cnn_models/-/tree/master/pytorch/MobileNet)   
-+ [SE-ResNet](https://gitsnps.internal.synopsys.com/dwc_ev/cnn_models/-/tree/master/pytorch/SE_ResNet)   
++ [SE-ResNet](https://gitsnps.internal.synopsys.com/dwc_ev/cnn_models/-/tree/master/pytorch/SE_ResNet) 
++ [Semantic FPN](https://gitsnps.internal.synopsys.com/dwc_ev/cnn_models/-/tree/master/pytorch/Semantic_FPN) 
 + [ShuffleNet V1](https://gitsnps.internal.synopsys.com/dwc_ev/cnn_models/-/tree/master/pytorch/ShuffleNet)   
 + [ShuffleNet V2](https://gitsnps.internal.synopsys.com/dwc_ev/cnn_models/-/tree/master/pytorch/ShuffleNet)   
 + [Swin Transformer](https://gitsnps.internal.synopsys.com/dwc_ev/cnn_models/-/tree/master/pytorch/Swin_Transformer)     
