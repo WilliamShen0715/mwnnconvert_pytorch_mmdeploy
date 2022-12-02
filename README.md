@@ -43,5 +43,4 @@ Default output directory is under mmdeploy_model
 + [ShuffleNet V2](https://gitsnps.internal.synopsys.com/dwc_ev/cnn_models/-/tree/master/pytorch/ShuffleNet)   
 + [Swin Transformer](https://gitsnps.internal.synopsys.com/dwc_ev/cnn_models/-/tree/master/pytorch/Swin_Transformer)     
 + [UNet](https://gitsnps.internal.synopsys.com/dwc_ev/cnn_models/-/tree/master/pytorch/UNet)   
-(still error at mwnn quantize phase, it is adviced to use pyt2onnx now)   
 + [ViT](https://gitsnps.internal.synopsys.com/dwc_ev/cnn_models/-/tree/master/pytorch/ViT)   
