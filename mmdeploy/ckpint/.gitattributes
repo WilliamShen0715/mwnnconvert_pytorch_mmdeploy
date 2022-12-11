@@ -1,3 +1,0 @@
-yolov7_norm_a12_w12 filter=lfs diff=lfs merge=lfs -text
-yolov7_norm_a8_w12 filter=lfs diff=lfs merge=lfs -text
-yolov7_norm_a8_w8 filter=lfs diff=lfs merge=lfs -text
