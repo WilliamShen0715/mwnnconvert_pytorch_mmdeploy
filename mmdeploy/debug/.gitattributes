@@ -1,6 +1,0 @@
-yolov7e612.onnx filter=lfs diff=lfs merge=lfs -text
-yolov7e68.onnx filter=lfs diff=lfs merge=lfs -text
-yolov7tiny8.onnx filter=lfs diff=lfs merge=lfs -text
-yolov7tiny12.onnx filter=lfs diff=lfs merge=lfs -text
-yolov7x12.onnx filter=lfs diff=lfs merge=lfs -text
-yolov7x8.onnx filter=lfs diff=lfs merge=lfs -text
