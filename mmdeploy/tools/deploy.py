@@ -53,7 +53,7 @@ def parse_args():
         default=None,
         help='Image directory for quantize model.')
     parser.add_argument(
-        '--quant', action='store_true', help='Quantize model to low bit.')
+        '--quant', action='store_false', help='Quantize model to low bit.')
     parser.add_argument(
         '--uri',
         default='192.168.1.1:60000',
@@ -95,11 +95,12 @@ def torch2ir(ir_type: IR):
     else:
         raise KeyError(f'Unexpected IR type {ir_type}')
 
-def mmdeploy_export():
-    args = parse_args()
+def mmdeploy_export(deploy_cfg,model_cfg,checkpoint,img,work_dir,device='cpu',quant=False,quant_image_dir=None,calib_dataset_cfg=None,uri='192.168.1.1:60000',show=False,log_level='INFO',test_img=None):
+    #args = parse_args()
     set_start_method('spawn', force=True)
     logger = get_root_logger()
-    log_level = logging.getLevelName(args.log_level)
+    #log_level = logging.getLevelName(args.log_level)
+    log_level = logging.getLevelName(log_level)
     logger.setLevel(log_level)
 
     pipeline_funcs = [
@@ -108,25 +109,29 @@ def mmdeploy_export():
     PIPELINE_MANAGER.enable_multiprocess(True, pipeline_funcs)
     PIPELINE_MANAGER.set_log_level(log_level, pipeline_funcs)
 
-    deploy_cfg_path = args.deploy_cfg
-    model_cfg_path = args.model_cfg
-    checkpoint_path = args.checkpoint
-    quant = args.quant
-    quant_image_dir = args.quant_image_dir
+    #deploy_cfg_path = args.deploy_cfg
+    deploy_cfg_path = deploy_cfg
+    #model_cfg_path = args.model_cfg
+    model_cfg_path = model_cfg
+    #checkpoint_path = args.checkpoint
+    checkpoint_path = checkpoint
+    #quant = args.quant
+    #quant_image_dir = args.quant_image_dir
 
     # load deploy_cfg
     deploy_cfg, model_cfg = load_config(deploy_cfg_path, model_cfg_path)
 
     # create work_dir if not
-    mmcv.mkdir_or_exist(osp.abspath(args.work_dir))
+    #mmcv.mkdir_or_exist(osp.abspath(args.work_dir))
+    mmcv.mkdir_or_exist(osp.abspath(work_dir))
 
-    if args.dump_info:
+    '''if args.dump_info:
         export2SDK(
             deploy_cfg,
             model_cfg,
             args.work_dir,
             pth=checkpoint_path,
-            device=args.device)
+            device=args.device)'''
 
     ret_value = mp.Value('d', 0, lock=False)
 
@@ -134,18 +139,27 @@ def mmdeploy_export():
     ir_config = get_ir_config(deploy_cfg)
     ir_save_file = ir_config['save_file']
     ir_type = IR.get(ir_config['type'])
-    torch2ir(ir_type)(
+    '''torch2ir(ir_type)(
         args.img,
         args.work_dir,
         ir_save_file,
         deploy_cfg_path,
         model_cfg_path,
         checkpoint_path,
-        device=args.device)
+        device=args.device)'''
+    torch2ir(ir_type)(
+        img,
+        work_dir,
+        ir_save_file,
+        deploy_cfg_path,
+        model_cfg_path,
+        checkpoint_path,
+        device)
 
     # convert backend
-    ir_files = [osp.join(args.work_dir, ir_save_file)]
-
+    #ir_files = [osp.join(args.work_dir, ir_save_file)]
+    ir_files = [osp.join(work_dir, ir_save_file)]
+    
     # partition model
     partition_cfgs = get_partition_config(deploy_cfg)
 
@@ -162,7 +176,8 @@ def mmdeploy_export():
         ir_files = []
         for partition_cfg in partition_cfgs:
             save_file = partition_cfg['save_file']
-            save_path = osp.join(args.work_dir, save_file)
+            #save_path = osp.join(args.work_dir, save_file)
+            save_path = osp.join(work_dir, save_file)
             start = partition_cfg['start']
             end = partition_cfg['end']
             dynamic_axes = partition_cfg.get('dynamic_axes', None)
@@ -179,16 +194,24 @@ def mmdeploy_export():
     # calib data
     calib_filename = get_calib_filename(deploy_cfg)
     if calib_filename is not None:
-        calib_path = osp.join(args.work_dir, calib_filename)
-        create_calib_input_data(
+        #calib_path = osp.join(args.work_dir, calib_filename)
+        calib_path = osp.join(work_dir, calib_filename)
+        '''create_calib_input_data(
             calib_path,
             deploy_cfg_path,
             model_cfg_path,
             checkpoint_path,
             dataset_cfg=args.calib_dataset_cfg,
             dataset_type='val',
-            device=args.device)
-
+            device=args.device)'''
+        create_calib_input_data(
+            calib_path,
+            deploy_cfg_path,
+            model_cfg_path,
+            checkpoint_path,
+            dataset_cfg=calib_dataset_cfg,
+            dataset_type='val',
+            device=device)
     backend_files = ir_files
     # convert backend
     backend = get_backend(deploy_cfg)
@@ -213,16 +236,25 @@ def mmdeploy_export():
 
             partition_type = 'end2end' if partition_cfgs is None \
                 else onnx_name
-            onnx2tensorrt(
+            '''onnx2tensorrt(
                 args.work_dir,
                 save_file,
                 model_id,
                 deploy_cfg_path,
                 onnx_path,
                 device=args.device,
+                partition_type=partition_type)'''
+            onnx2tensorrt(
+                work_dir,
+                save_file,
+                model_id,
+                deploy_cfg_path,
+                onnx_path,
+                device=device,
                 partition_type=partition_type)
 
-            backend_files.append(osp.join(args.work_dir, save_file))
+            backend_files.append(osp.join(work_dir, save_file))
+            #backend_files.append(osp.join(args.work_dir, save_file))
 
     elif backend == Backend.NCNN:
         from mmdeploy.apis.ncnn import is_available as is_available_ncnn
@@ -240,10 +272,11 @@ def mmdeploy_export():
 
         backend_files = []
         for onnx_path in ir_files:
-            model_param_path, model_bin_path = get_output_model_file(
-                onnx_path, args.work_dir)
+            #model_param_path, model_bin_path = get_output_model_file(onnx_path, args.work_dir)
+            model_param_path, model_bin_path = get_output_model_file(onnx_path, work_dir)
             onnx_name = osp.splitext(osp.split(onnx_path)[1])[0]
-            ncnn_api.from_onnx(onnx_path, osp.join(args.work_dir, onnx_name))
+            #ncnn_api.from_onnx(onnx_path, osp.join(args.work_dir, onnx_name))
+            ncnn_api.from_onnx(onnx_path, osp.join(work_dir, onnx_name))
 
             if quant:
                 from onnx2ncnn_quant_table import get_table
@@ -252,14 +285,22 @@ def mmdeploy_export():
 
                 deploy_cfg, model_cfg = load_config(deploy_cfg_path,
                                                     model_cfg_path)
-                quant_onnx, quant_table, quant_param, quant_bin = get_quant_model_file(  # noqa: E501
-                    onnx_path, args.work_dir)
+                '''quant_onnx, quant_table, quant_param, quant_bin = get_quant_model_file(  # noqa: E501
+                    onnx_path, args.work_dir)'''
+                quant_onnx, quant_table, quant_param, quant_bin = get_quant_model_file(onnx_path, work_dir)
 
-                create_process(
+                '''create_process(
                     'ncnn quant table',
                     target=get_table,
                     args=(onnx_path, deploy_cfg, model_cfg, quant_onnx,
                           quant_table, quant_image_dir, args.device),
+                    kwargs=dict(),
+                    ret_value=ret_value)'''
+                create_process(
+                    'ncnn quant table',
+                    target=get_table,
+                    args=(onnx_path, deploy_cfg, model_cfg, quant_onnx,
+                          quant_table, quant_image_dir, device),
                     kwargs=dict(),
                     ret_value=ret_value)
 
@@ -287,15 +328,18 @@ def mmdeploy_export():
         from mmdeploy.apis.snpe import get_env_key, get_output_model_file
 
         if get_env_key() not in os.environ:
-            os.environ[get_env_key()] = args.uri
+            #os.environ[get_env_key()] = args.uri
+            os.environ[get_env_key()] = uri
 
         PIPELINE_MANAGER.set_log_level(log_level, [snpe_api.from_onnx])
 
         backend_files = []
         for onnx_path in ir_files:
-            dlc_path = get_output_model_file(onnx_path, args.work_dir)
+            #dlc_path = get_output_model_file(onnx_path, args.work_dir)
+            dlc_path = get_output_model_file(onnx_path, work_dir)
             onnx_name = osp.splitext(osp.split(onnx_path)[1])[0]
-            snpe_api.from_onnx(onnx_path, osp.join(args.work_dir, onnx_name))
+            #snpe_api.from_onnx(onnx_path, osp.join(args.work_dir, onnx_name))
+            snpe_api.from_onnx(onnx_path, osp.join(work_dir, onnx_name))
             backend_files = [dlc_path]
 
     elif backend == Backend.OPENVINO:
@@ -313,12 +357,13 @@ def mmdeploy_export():
 
         openvino_files = []
         for onnx_path in ir_files:
-            model_xml_path = get_output_model_file(onnx_path, args.work_dir)
+            #model_xml_path = get_output_model_file(onnx_path, args.work_dir)
+            model_xml_path = get_output_model_file(onnx_path, work_dir)
             input_info = get_input_info_from_cfg(deploy_cfg)
             output_names = get_ir_config(deploy_cfg).output_names
             mo_options = get_mo_options_from_cfg(deploy_cfg)
-            openvino_api.from_onnx(onnx_path, args.work_dir, input_info,
-                                   output_names, mo_options)
+            #openvino_api.from_onnx(onnx_path, args.work_dir, input_info,output_names, mo_options)
+            openvino_api.from_onnx(onnx_path, work_dir, input_info,output_names, mo_options)
             openvino_files.append(model_xml_path)
         backend_files = openvino_files
 
@@ -345,7 +390,7 @@ def mmdeploy_export():
             from_onnx(
                 onnx_path,
                 algo_prefix,
-                device=args.device,
+                device='cpu',
                 input_shapes=input_shapes)
             pplnn_files += [onnx_path, algo_file]
         backend_files = pplnn_files
@@ -362,11 +407,13 @@ def mmdeploy_export():
         backend_files = []
         for model_id, onnx_path in zip(range(len(ir_files)), ir_files):
             pre_fix_name = osp.splitext(osp.split(onnx_path)[1])[0]
-            output_path = osp.join(args.work_dir, pre_fix_name + '.rknn')
+            #output_path = osp.join(args.work_dir, pre_fix_name + '.rknn')
+            output_path = osp.join(work_dir, pre_fix_name + '.rknn')
             import tempfile
             dataset_file = tempfile.NamedTemporaryFile(suffix='.txt').name
             with open(dataset_file, 'w') as f:
-                f.writelines([osp.abspath(args.img)])
+                #f.writelines([osp.abspath(args.img)])
+                f.writelines([osp.abspath(img)])
             onnx2rknn(
                 onnx_path,
                 output_path,
@@ -385,13 +432,14 @@ def mmdeploy_export():
         om_files = []
         for model_id, onnx_path in enumerate(ir_files):
             om_path = osp.splitext(onnx_path)[0] + '.om'
-            from_onnx(onnx_path, args.work_dir, model_inputs[model_id])
+            #from_onnx(onnx_path, args.work_dir, model_inputs[model_id])
+            from_onnx(onnx_path,work_dir, model_inputs[model_id])
             om_files.append(om_path)
         backend_files = om_files
 
-        if args.dump_info:
+        '''if args.dump_info:
             from mmdeploy.backend.ascend import update_sdk_pipeline
-            update_sdk_pipeline(args.work_dir)
+            update_sdk_pipeline(args.work_dir)'''
 
     elif backend == Backend.COREML:
         from mmdeploy.apis.coreml import from_torchscript, get_model_suffix
@@ -401,7 +449,8 @@ def mmdeploy_export():
         coreml_files = []
         for model_id, torchscript_path in enumerate(ir_files):
             torchscript_name = osp.splitext(osp.split(torchscript_path)[1])[0]
-            output_file_prefix = osp.join(args.work_dir, torchscript_name)
+            #output_file_prefix = osp.join(args.work_dir, torchscript_name)
+            output_file_prefix = osp.join(work_dir, torchscript_name)
             convert_to = deploy_cfg.backend_config.convert_to
             from_torchscript(torchscript_path, output_file_prefix,
                              ir_config.input_names, ir_config.output_names,
@@ -410,27 +459,41 @@ def mmdeploy_export():
             coreml_files.append(output_file_prefix + suffix)
         backend_files = coreml_files
 
-    if args.test_img is None:
-        args.test_img = args.img
+    '''if args.test_img is None:
+        args.test_img = args.img'''
+    if test_img is None:
+        test_img = img
 
-    extra = dict(
+    '''extra = dict(
         backend=backend,
         output_file=osp.join(args.work_dir, f'output_{backend.value}.jpg'),
-        show_result=args.show)
+        show_result=args.show)'''
+    extra = dict(
+        backend=backend,
+        output_file=osp.join(work_dir, f'output_{backend.value}.jpg'),
+        show_result=show)
     if backend == Backend.SNPE:
-        extra['uri'] = args.uri
+        #extra['uri'] = args.uri
+        extra['uri'] = uri
 
     # get backend inference result, try render
-    create_process(
+    '''create_process(
         f'visualize {backend.value} model',
         target=visualize_model,
         args=(model_cfg_path, deploy_cfg_path, backend_files, args.test_img,
               args.device),
         kwargs=extra,
+        ret_value=ret_value)'''
+    create_process(
+        f'visualize {backend.value} model',
+        target=visualize_model,
+        args=(model_cfg_path, deploy_cfg_path, backend_files, test_img,
+              device),
+        kwargs=extra,
         ret_value=ret_value)
 
     # get pytorch model inference result, try visualize if possible
-    create_process(
+    '''create_process(
         'visualize pytorch model',
         target=visualize_model,
         args=(model_cfg_path, deploy_cfg_path, [checkpoint_path],
@@ -439,6 +502,16 @@ def mmdeploy_export():
             backend=Backend.PYTORCH,
             output_file=osp.join(args.work_dir, 'output_pytorch.jpg'),
             show_result=args.show),
+        ret_value=ret_value)'''
+    create_process(
+        'visualize pytorch model',
+        target=visualize_model,
+        args=(model_cfg_path, deploy_cfg_path, [checkpoint_path],
+              test_img, device),
+        kwargs=dict(
+            backend=Backend.PYTORCH,
+            output_file=osp.join(work_dir, 'output_pytorch.jpg'),
+            show_result=show),
         ret_value=ret_value)
     logger.info('All process success.')
 
@@ -791,4 +864,5 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+   #main()
+    mmdeploy_export('configs/mmcls/classification_onnxruntime_dynamic.py','mmclassification/configs/swin_transformer/swin_tiny_224_b16x64_300e_imagenet.py','/synology/data/swilliam/cnn_models/pytorch/Swin_Transformer/mmdeploy/swin_tiny_224.pth','/synology/data/swilliam/nnac/mwnnconvert/calibration/test_images/ImageNet/n02930766_1112.jpeg','mmdeploy_model/swin_tiny_mmd')
