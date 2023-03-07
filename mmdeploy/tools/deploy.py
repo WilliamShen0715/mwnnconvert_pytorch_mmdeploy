@@ -26,12 +26,13 @@ def parse_args():
     parser.add_argument('model_cfg', help='model config path')
     parser.add_argument('checkpoint', help='model checkpoint path')
     parser.add_argument('img', help='image used to convert model model')
+    parser.add_argument('work_dir', help='the dir to save logs and models')
     parser.add_argument(
         '--test-img', default=None, help='image used to test model')
-    parser.add_argument(
+    '''parser.add_argument(
         '--work-dir',
         default=os.getcwd(),
-        help='the dir to save logs and models')
+        help='the dir to save logs and models')'''
     parser.add_argument(
         '--calib-dataset-cfg',
         help='dataset config path used to calibrate in int8 mode. If not \
@@ -864,5 +865,5 @@ def main():
 
 
 if __name__ == '__main__':
-   #main()
-    mmdeploy_export('configs/mmcls/classification_onnxruntime_dynamic.py','mmclassification/configs/swin_transformer/swin_tiny_224_b16x64_300e_imagenet.py','/synology/data/swilliam/cnn_models/pytorch/Swin_Transformer/mmdeploy/swin_tiny_224.pth','/synology/data/swilliam/nnac/mwnnconvert/calibration/test_images/ImageNet/n02930766_1112.jpeg','mmdeploy_model/swin_tiny_mmd')
+    main()
+    #mmdeploy_export('/synology/data/swilliam/nnac/mwnnconvert/pt2mwnn/mwnnconvert_pytorch_mmdeploy/mmdeploy/configs/mmcls/classification_onnxruntime_dynamic.py','/synology/data/swilliam/nnac/mwnnconvert/pt2mwnn/mwnnconvert_pytorch_mmdeploy/mmdeploy/mmclassification/configs/swin_transformer/swin_tiny_224_b16x64_300e_imagenet.py','/synology/data/swilliam/cnn_models/pytorch/Swin_Transformer/mmdeploy/swin_tiny_224.pth','/synology/data/swilliam/nnac/mwnnconvert/calibration/test_images/ImageNet/n02930766_1112.jpeg','mmdeploy_model/swin_tiny_mmd')
