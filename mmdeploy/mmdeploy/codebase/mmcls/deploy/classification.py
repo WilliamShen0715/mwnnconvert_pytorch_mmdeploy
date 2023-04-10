@@ -104,8 +104,7 @@ class Classification(BaseTask):
         else:
             from mmcls.apis import init_model
 
-        model = init_model(self.model_cfg, model_checkpoint, self.device,
-                           cfg_options)
+        model = init_model(self.model_cfg, model_checkpoint, self.device,cfg_options)
 
         return model.eval()
 

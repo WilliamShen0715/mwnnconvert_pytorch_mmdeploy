@@ -3,7 +3,10 @@ from typing import Callable, Dict, List, Optional, Sequence, Union
 
 from torch.autograd import Function
 from torch.onnx.symbolic_helper import parse_args
+
 from torch.onnx.symbolic_registry import _registry as pytorch_registry
+#from torch.onnx.register_custom_op_symbolic import _registry as pytorch_registry
+#from torch.onnx import register_custom_op_symbolic as register_op
 from torch.onnx.symbolic_registry import register_op
 
 from mmdeploy.utils import IR, Backend, get_root_logger
